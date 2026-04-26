@@ -3,75 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Calculadora</title>
+  <title>La Viborita</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       min-height: 100vh;
       display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #f0f0ef;
+      background: #0f1117;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #f0f0e8;
+      gap: 16px;
     }
 
-    .calc {
-      width: 320px;
-      background: #ffffff;
-      border: 1px solid #e0dfd8;
-      border-radius: 24px;
-      padding: 20px;
-      user-select: none;
-      box-shadow: 0 8px 32px rgba(0,0,0,0.10);
+    h1 {
+      font-size: 28px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #4ade80;
+      text-transform: uppercase;
     }
 
-    .display {
-      background: #f5f4f0;
-      border-radius: 14px;
-      padding: 16px 20px 14px;
-      margin-bottom: 18px;
-      min-height: 88px;
+    .hud {
+      display: flex;
+      gap: 32px;
+      font-size: 14px;
+      color: #888;
+    }
+
+    .hud span { color: #f0f0e8; font-weight: 500; }
+
+    #board {
+      border: 2px solid #1e2330;
+      border-radius: 12px;
+      display: block;
+      background: #13161f;
+      box-shadow: 0 0 40px rgba(74, 222, 128, 0.08);
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
       display: flex;
       flex-direction: column;
-      align-items: flex-end;
-      justify-content: flex-end;
-      gap: 4px;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: rgba(13, 16, 23, 0.88);
+      border-radius: 12px;
+      backdrop-filter: blur(4px);
+    }
+
+    .overlay h2 {
+      font-size: 26px;
+      font-weight: 600;
+      color: #f0f0e8;
+    }
+
+    .overlay p { font-size: 14px; color: #888; }
+
+    .overlay button {
+      margin-top: 8px;
+      padding: 10px 28px;
+      background: #4ade80;
+      color: #0f1117;
+      border: none;
+      border-radius: 10px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .overlay button:hover  { background: #22c55e; }
+    .overlay button:active { transform: scale(0.96); }
+
+    .wrap {
+      position: relative;
+      border-radius: 12px;
       overflow: hidden;
     }
 
-    .display .expr {
-      font-size: 13px;
-      color: #999;
-      min-height: 18px;
-      word-break: break-all;
-      text-align: right;
-    }
-
-    .display .result {
-      font-size: 38px;
-      font-weight: 500;
-      color: #1a1a1a;
-      word-break: break-all;
-      text-align: right;
-      line-height: 1.1;
-      transition: font-size 0.1s;
-    }
-
-    .grid {
+    /* Mobile controls */
+    .dpad {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 10px;
+      grid-template-areas: ". up ." "left . right" ". down .";
+      grid-template-columns: repeat(3, 56px);
+      grid-template-rows: repeat(3, 56px);
+      gap: 6px;
+      margin-top: 8px;
     }
 
-    .btn {
-      border: 1px solid #e8e7e2;
-      background: #f5f4f0;
-      color: #1a1a1a;
-      border-radius: 14px;
-      font-size: 17px;
-      font-weight: 400;
-      height: 62px;
+    .dpad button {
+      background: #1e2330;
+      border: 1px solid #2a2f3f;
+      border-radius: 10px;
+      color: #aaa;
+      font-size: 22px;
       cursor: pointer;
       display: flex;
       align-items: center;
@@ -79,198 +109,262 @@
       transition: background 0.1s, transform 0.08s;
       -webkit-tap-highlight-color: transparent;
     }
+    .dpad button:active { background: #2a2f3f; transform: scale(0.92); }
+    .dpad .up    { grid-area: up; }
+    .dpad .left  { grid-area: left; }
+    .dpad .right { grid-area: right; }
+    .dpad .down  { grid-area: down; }
 
-    .btn:hover  { background: #e8e7e2; }
-    .btn:active { transform: scale(0.94); }
-
-    .btn.op {
-      background: #deeaf8;
-      color: #0c447c;
-      border-color: #b5d4f4;
-      font-size: 19px;
-    }
-    .btn.op:hover { background: #b5d4f4; }
-
-    .btn.eq {
-      background: #0c447c;
-      color: #e6f1fb;
-      border-color: #0c447c;
-      font-weight: 500;
-    }
-    .btn.eq:hover { background: #185fa5; }
-
-    .btn.clear {
-      background: #fce8e8;
-      color: #791f1f;
-      border-color: #f7c1c1;
-    }
-    .btn.clear:hover { background: #f7c1c1; }
-
-    .btn.zero { grid-column: span 2; }
-
-    @media (prefers-color-scheme: dark) {
-      body { background: #1a1a1a; }
-      .calc { background: #2c2c2a; border-color: #444; box-shadow: 0 8px 32px rgba(0,0,0,0.4); }
-      .display { background: #222220; }
-      .display .result { color: #f0efe8; }
-      .display .expr { color: #666; }
-      .btn { background: #3a3a38; border-color: #4a4a48; color: #f0efe8; }
-      .btn:hover { background: #4a4a48; }
-      .btn.op { background: #042c53; color: #b5d4f4; border-color: #0c447c; }
-      .btn.op:hover { background: #0c447c; }
-      .btn.eq { background: #378add; color: #e6f1fb; border-color: #378add; }
-      .btn.eq:hover { background: #185fa5; }
-      .btn.clear { background: #501313; color: #f7c1c1; border-color: #791f1f; }
-      .btn.clear:hover { background: #791f1f; }
-    }
+    .hint { font-size: 12px; color: #444; margin-top: 4px; }
   </style>
 </head>
 <body>
 
-  <div class="calc">
-    <div class="display">
-      <div class="expr" id="expr"></div>
-      <div class="result" id="result">0</div>
-    </div>
-    <div class="grid">
-      <button class="btn clear" data-v="AC">AC</button>
-      <button class="btn op"    data-v="+/-">+/-</button>
-      <button class="btn op"    data-v="%">%</button>
-      <button class="btn op"    data-v="÷">÷</button>
+  <h1>🐍 La Viborita</h1>
 
-      <button class="btn" data-v="7">7</button>
-      <button class="btn" data-v="8">8</button>
-      <button class="btn" data-v="9">9</button>
-      <button class="btn op" data-v="×">×</button>
+  <div class="hud">
+    Puntos: <span id="score">0</span> &nbsp;&nbsp; Récord: <span id="best">0</span>
+  </div>
 
-      <button class="btn" data-v="4">4</button>
-      <button class="btn" data-v="5">5</button>
-      <button class="btn" data-v="6">6</button>
-      <button class="btn op" data-v="−">−</button>
+  <div class="wrap">
+    <canvas id="board" width="400" height="400"></canvas>
 
-      <button class="btn" data-v="1">1</button>
-      <button class="btn" data-v="2">2</button>
-      <button class="btn" data-v="3">3</button>
-      <button class="btn op" data-v="+">+</button>
-
-      <button class="btn zero" data-v="0">0</button>
-      <button class="btn"      data-v=".">.</button>
-      <button class="btn eq"   data-v="=">=</button>
+    <div class="overlay" id="overlay">
+      <h2 id="overlay-title">¡Lista para jugar!</h2>
+      <p id="overlay-msg">Usa las flechas del teclado o los botones</p>
+      <button id="start-btn">Iniciar</button>
     </div>
   </div>
 
+  <div class="dpad">
+    <button class="up"    id="btn-up">▲</button>
+    <button class="left"  id="btn-left">◀</button>
+    <button class="right" id="btn-right">▶</button>
+    <button class="down"  id="btn-down">▼</button>
+  </div>
+
+  <p class="hint">Teclado: flechas · Móvil: botones de dirección</p>
+
   <script>
-    (function () {
-      const resEl  = document.getElementById('result');
-      const exprEl = document.getElementById('expr');
-      let cur = '0', prev = '', op = '', justEvaled = false;
+  (function () {
+    const COLS = 20, ROWS = 20;
+    const CELL = 400 / COLS;
+    const canvas = document.getElementById('board');
+    const ctx    = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const bestEl  = document.getElementById('best');
+    const overlay = document.getElementById('overlay');
+    const overlayTitle = document.getElementById('overlay-title');
+    const overlayMsg   = document.getElementById('overlay-msg');
+    const startBtn     = document.getElementById('start-btn');
 
-      function fmt(n) {
-        const s = parseFloat(n.toPrecision(10)).toString();
-        return s.length > 12 ? parseFloat(n.toPrecision(6)).toString() : s;
+    let snake, dir, nextDir, food, score, best = 0, loop, alive;
+
+    const COLORS = {
+      head:     '#4ade80',
+      body:     '#22c55e',
+      bodyDark: '#16a34a',
+      food:     '#f87171',
+      foodGlow: 'rgba(248,113,113,0.25)',
+      grid:     '#161a24',
+      bg:       '#13161f',
+    };
+
+    function rnd(max) { return Math.floor(Math.random() * max); }
+
+    function spawnFood() {
+      let pos;
+      do {
+        pos = { x: rnd(COLS), y: rnd(ROWS) };
+      } while (snake.some(s => s.x === pos.x && s.y === pos.y));
+      food = pos;
+    }
+
+    function init() {
+      const cx = Math.floor(COLS / 2), cy = Math.floor(ROWS / 2);
+      snake = [
+        { x: cx,     y: cy },
+        { x: cx - 1, y: cy },
+        { x: cx - 2, y: cy },
+      ];
+      dir = { x: 1, y: 0 };
+      nextDir = { x: 1, y: 0 };
+      score = 0;
+      scoreEl.textContent = 0;
+      alive = true;
+      spawnFood();
+    }
+
+    function drawBg() {
+      ctx.fillStyle = COLORS.bg;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = COLORS.grid;
+      ctx.lineWidth = 0.5;
+      for (let x = 0; x <= COLS; x++) {
+        ctx.beginPath();
+        ctx.moveTo(x * CELL, 0);
+        ctx.lineTo(x * CELL, canvas.height);
+        ctx.stroke();
       }
-
-      function adjustSize(txt) {
-        const l = txt.length;
-        resEl.style.fontSize = l > 14 ? '20px' : l > 10 ? '26px' : l > 7 ? '32px' : '38px';
+      for (let y = 0; y <= ROWS; y++) {
+        ctx.beginPath();
+        ctx.moveTo(0, y * CELL);
+        ctx.lineTo(canvas.width, y * CELL);
+        ctx.stroke();
       }
+    }
 
-      function setDisplay(main, sub) {
-        resEl.textContent  = main;
-        exprEl.textContent = sub || '';
-        adjustSize(main);
-      }
+    function drawRoundRect(x, y, w, h, r, color) {
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+      ctx.fill();
+    }
 
-      function compute() {
-        const a = parseFloat(prev), b = parseFloat(cur);
-        if (isNaN(a) || isNaN(b)) return cur;
-        switch (op) {
-          case '+': return fmt(a + b);
-          case '−': return fmt(a - b);
-          case '×': return fmt(a * b);
-          case '÷': return b === 0 ? 'Error' : fmt(a / b);
+    function drawSnake() {
+      const pad = 2;
+      snake.forEach((seg, i) => {
+        const px = seg.x * CELL + pad;
+        const py = seg.y * CELL + pad;
+        const sz = CELL - pad * 2;
+
+        if (i === 0) {
+          // Head
+          drawRoundRect(px, py, sz, sz, 6, COLORS.head);
+          // Eyes
+          const ex = dir.x, ey = dir.y;
+          ctx.fillStyle = '#0f1117';
+          const ew = 3, eh = 3;
+          const ox1 = sz * 0.3, ox2 = sz * 0.65;
+          const oy  = sz * 0.3;
+          // rotate eye positions based on direction
+          let e1x, e1y, e2x, e2y;
+          if (ex === 1) { e1x = px + sz*0.65; e1y = py + sz*0.28; e2x = px + sz*0.65; e2y = py + sz*0.62; }
+          else if (ex === -1) { e1x = px + sz*0.2; e1y = py + sz*0.28; e2x = px + sz*0.2; e2y = py + sz*0.62; }
+          else if (ey === -1) { e1x = px + sz*0.28; e1y = py + sz*0.2; e2x = px + sz*0.62; e2y = py + sz*0.2; }
+          else { e1x = px + sz*0.28; e1y = py + sz*0.65; e2x = px + sz*0.62; e2y = py + sz*0.65; }
+          ctx.beginPath(); ctx.arc(e1x, e1y, 2.5, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(e2x, e2y, 2.5, 0, Math.PI*2); ctx.fill();
+        } else {
+          const shade = i % 2 === 0 ? COLORS.body : COLORS.bodyDark;
+          drawRoundRect(px, py, sz, sz, 4, shade);
         }
-        return cur;
+      });
+    }
+
+    function drawFood() {
+      const px = food.x * CELL, py = food.y * CELL;
+      const cx = px + CELL / 2, cy = py + CELL / 2, r = CELL / 2 - 3;
+      // Glow
+      ctx.fillStyle = COLORS.foodGlow;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
+      ctx.fill();
+      // Apple
+      ctx.fillStyle = COLORS.food;
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fill();
+      // Shine
+      ctx.fillStyle = 'rgba(255,255,255,0.25)';
+      ctx.beginPath();
+      ctx.arc(cx - r*0.25, cy - r*0.25, r*0.35, 0, Math.PI*2);
+      ctx.fill();
+    }
+
+    function step() {
+      dir = nextDir;
+      const head = { x: snake[0].x + dir.x, y: snake[0].y + dir.y };
+
+      // Wall collision
+      if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+        gameOver(); return;
+      }
+      // Self collision
+      if (snake.some(s => s.x === head.x && s.y === head.y)) {
+        gameOver(); return;
       }
 
-      document.querySelectorAll('.btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const v = btn.dataset.v;
+      snake.unshift(head);
 
-          if (v === 'AC') {
-            cur = '0'; prev = ''; op = ''; justEvaled = false;
-            setDisplay('0', '');
-            return;
-          }
+      if (head.x === food.x && head.y === food.y) {
+        score++;
+        scoreEl.textContent = score;
+        if (score > best) { best = score; bestEl.textContent = best; }
+        spawnFood();
+      } else {
+        snake.pop();
+      }
 
-          if (v === '+/-') {
-            if (cur !== '0') cur = cur.startsWith('-') ? cur.slice(1) : '-' + cur;
-            setDisplay(cur, exprEl.textContent);
-            return;
-          }
+      draw();
+    }
 
-          if (v === '%') {
-            cur = fmt(parseFloat(cur) / 100);
-            setDisplay(cur, exprEl.textContent);
-            return;
-          }
+    function draw() {
+      drawBg();
+      drawFood();
+      drawSnake();
+    }
 
-          const isOp = ['÷', '×', '−', '+'].includes(v);
+    function getSpeed() {
+      if (score < 5)  return 160;
+      if (score < 10) return 130;
+      if (score < 20) return 100;
+      if (score < 35) return 80;
+      return 65;
+    }
 
-          if (v === '=') {
-            if (!op || !prev) return;
-            const res = compute();
-            setDisplay(res, prev + ' ' + op + ' ' + cur + ' =');
-            cur = res; prev = ''; op = ''; justEvaled = true;
-            return;
-          }
+    let loopTimeout;
+    function gameLoop() {
+      step();
+      if (alive) loopTimeout = setTimeout(gameLoop, getSpeed());
+    }
 
-          if (isOp) {
-            if (op && !justEvaled) {
-              const res = compute();
-              prev = res;
-              setDisplay(res, res + ' ' + v);
-            } else {
-              prev = cur;
-              setDisplay(cur, cur + ' ' + v);
-            }
-            op = v; justEvaled = false;
-            return;
-          }
+    function startGame() {
+      clearTimeout(loopTimeout);
+      overlay.style.display = 'none';
+      init();
+      draw();
+      loopTimeout = setTimeout(gameLoop, getSpeed());
+    }
 
-          if (v === '.') {
-            if (justEvaled) { cur = '0.'; justEvaled = false; }
-            else if (!cur.includes('.')) cur += '.';
-            setDisplay(cur, exprEl.textContent);
-            return;
-          }
+    function gameOver() {
+      alive = false;
+      clearTimeout(loopTimeout);
+      overlayTitle.textContent = score === 0 ? '¡Ay!' : score < 5 ? '¡Casi!' : score < 15 ? '¡Bien jugado!' : '¡Excelente!';
+      overlayMsg.textContent   = `Puntuación: ${score}`;
+      startBtn.textContent     = 'Jugar de nuevo';
+      overlay.style.display    = 'flex';
+    }
 
-          if (justEvaled) { cur = v; justEvaled = false; }
-          else cur = cur === '0' ? v : cur + v;
-          if (cur.length > 15) cur = cur.slice(0, 15);
-          setDisplay(cur, exprEl.textContent);
-        });
-      });
+    // Controls
+    const DIRS = {
+      ArrowUp:    { x:  0, y: -1 },
+      ArrowDown:  { x:  0, y:  1 },
+      ArrowLeft:  { x: -1, y:  0 },
+      ArrowRight: { x:  1, y:  0 },
+    };
 
-      document.addEventListener('keydown', e => {
-        const map = {
-          '0':'0','1':'1','2':'2','3':'3','4':'4',
-          '5':'5','6':'6','7':'7','8':'8','9':'9',
-          '.':'.', '+':'+', '-':'−', '*':'×', '/':'÷',
-          'Enter':'=', 'Escape':'AC', '%':'%'
-        };
-        const v = map[e.key];
-        if (e.key === 'Backspace') {
-          e.preventDefault();
-          if (cur.length > 1) cur = cur.slice(0, -1); else cur = '0';
-          setDisplay(cur, exprEl.textContent);
-          return;
-        }
-        if (!v) return;
-        e.preventDefault();
-        document.querySelector(`[data-v="${v}"]`)?.click();
-      });
-    })();
+    function setDir(d) {
+      // Prevent 180° reversal
+      if (d.x !== -dir.x || d.y !== -dir.y) nextDir = d;
+    }
+
+    document.addEventListener('keydown', e => {
+      if (DIRS[e.key]) { e.preventDefault(); setDir(DIRS[e.key]); }
+    });
+
+    document.getElementById('btn-up').addEventListener('click',    () => setDir({ x:  0, y: -1 }));
+    document.getElementById('btn-down').addEventListener('click',  () => setDir({ x:  0, y:  1 }));
+    document.getElementById('btn-left').addEventListener('click',  () => setDir({ x: -1, y:  0 }));
+    document.getElementById('btn-right').addEventListener('click', () => setDir({ x:  1, y:  0 }));
+
+    startBtn.addEventListener('click', startGame);
+
+    // Initial draw
+    init();
+    draw();
+    overlay.style.display = 'flex';
+  })();
   </script>
 
 </body>
